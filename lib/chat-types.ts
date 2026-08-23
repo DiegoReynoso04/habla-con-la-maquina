@@ -37,7 +37,41 @@ export const emptyStats: SessionStats = {
   lastCompletionTokens: null,
 }
 
+/** Clave de la versión anterior (una sola conversación). Solo se usa para migrar datos viejos. */
 export const STORAGE_KEY = 'v0-chat-session-v1'
+
+/** Clave con la lista completa de conversaciones (historial). */
+export const CONVERSATIONS_STORAGE_KEY = 'v0-chat-conversations-v1'
+
+export type Conversation = {
+  id: string
+  title: string
+  createdAt: number
+  updatedAt: number
+  messages: Message[]
+  stats: SessionStats
+}
+
+export function newConversation(id: string): Conversation {
+  const now = Date.now()
+  return {
+    id,
+    title: 'Nueva conversación',
+    createdAt: now,
+    updatedAt: now,
+    messages: [],
+    stats: emptyStats,
+  }
+}
+
+/** Deriva un título corto a partir del primer mensaje del usuario. */
+export function deriveTitle(messages: Message[]): string {
+  const firstUser = messages.find((m) => m.role === 'user')
+  if (!firstUser) return 'Nueva conversación'
+  const clean = firstUser.content.trim().replace(/\s+/g, ' ')
+  if (clean.length <= 42) return clean || 'Nueva conversación'
+  return `${clean.slice(0, 42).trimEnd()}…`
+}
 
 export function accumulate(stats: SessionStats, meta: MessageMeta): SessionStats {
   return {
